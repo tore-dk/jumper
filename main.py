@@ -14,7 +14,7 @@ class HeroCharacter:
         self.IMG = pygame.image.load(img)
         self.velocity_y = 0
         self.velocity_x = 0
-        self.acceleration_y = -10
+        self.acceleration_y = -15
         self.in_motion = False
         self.width = self.IMG.get_rect().width
         self.height = self.IMG.get_rect().height
@@ -26,16 +26,25 @@ class HeroCharacter:
         screen.blit(self.IMG, (self.x, self.y))
 
     def jump(self, dx, dy):
-        self.velocity_y -= dy/3
-        self.velocity_x -= dx/3
+        self.velocity_y += dy/4
+        self.velocity_x += dx/4
 
     def update_variables(self):
-        self.velocity_y += self.acceleration_y
-        self.y -= self.velocity_y
-        self.x -= self.velocity_x
+        self.velocity_y -= self.acceleration_y
+        self.y += self.velocity_y
+        self.x += self.velocity_x
 
     def show_pointer(self, end_pos):
         pygame.draw.line(screen, (255, 255, 255), (self.x, self.y), end_pos)
+
+    def hit_wall(self, side):
+        self.velocity_y = 0
+        self.velocity_x = 0
+        self.in_motion = False
+        if side == 1:
+            self.x = 100
+        else:
+            self.x = width - 100 - self.width
 
 
 # INITIATE MAIN CHARACTER AS MAN
@@ -53,19 +62,24 @@ while running:
                 running = False
     mouse_pos = pygame.mouse.get_pos()
     if pygame.mouse.get_pressed()[0] == 1 and not man.in_motion:
-        man.in_motion = True
-        man.jump(mouse_pos[0] - man.x, mouse_pos[1] - man.y)
+        if 100 <= mouse_pos[0] <= width - 100 - man.width:
+            man.in_motion = True
+            man.jump(mouse_pos[0] - man.x, mouse_pos[1] - man.y)
     # GENERAL SCREEN
     screen.fill((0, 10, 10))
     pygame.draw.rect(screen, (0, 0, 0), (width-100, 0, 100, height))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
-    # HP UPDATE
+    # MAIN CHARACTER UPDATE
     if man.y > height:
         man.__init__()
     if man.in_motion:
         man.update_variables()
     else:
         man.show_pointer(mouse_pos)
+    if man.x < 100:
+        man.hit_wall(1)
+    elif man.x > width - 100 - man.width:
+        man.hit_wall(0)
     man.show()
 
     pygame.display.update()
