@@ -12,6 +12,7 @@ screen = pygame.display.set_mode((width, height))
 class HeroCharacter:
     def __init__(self, img='ball.png', x=None, y=None):
         self.IMG = pygame.image.load(img)
+        self.IMG = pygame.transform.scale(self.IMG, (100, 100))
         self.velocity_y = 0
         self.velocity_x = 0
         self.acceleration_y = -15
@@ -62,7 +63,8 @@ while running:
                 running = False
     mouse_pos = pygame.mouse.get_pos()
     if pygame.mouse.get_pressed()[0] == 1 and not man.in_motion:
-        if 100 <= mouse_pos[0] <= width - 100 - man.width:
+        print('Hi')
+        if (man.x == 100 and mouse_pos[0] > 100 + man.width) or (mouse_pos[0] < man.x == width - 100 - man.width):
             man.in_motion = True
             man.jump(mouse_pos[0] - man.x, mouse_pos[1] - man.y)
     # GENERAL SCREEN
@@ -70,16 +72,20 @@ while running:
     pygame.draw.rect(screen, (0, 0, 0), (width-100, 0, 100, height))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
     # MAIN CHARACTER UPDATE
+    # RESTART IF TOO LOW
     if man.y > height:
         man.__init__()
     if man.in_motion:
         man.update_variables()
     else:
         man.show_pointer(mouse_pos)
+    # WALL DETECTION
     if man.x < 100:
         man.hit_wall(1)
     elif man.x > width - 100 - man.width:
         man.hit_wall(0)
+    # SLOWLY FALLING
+    man.y += 2
     man.show()
 
     pygame.display.update()
