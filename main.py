@@ -5,7 +5,7 @@ pygame.init()
 width, height = 900, 1600
 screen = pygame.display.set_mode((width, height))
 
-global_downwards = 2
+global_downwards = 5
 
 # MAIN CHARACTER
 
@@ -23,9 +23,11 @@ class HeroCharacter:
         self.x = width - 100 - self.width if x is None else x
         self.y = height - 300 if y is None else y
         self.pointer_angle = 0
+        self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
 
     def show(self):
         screen.blit(self.IMG, (self.x, self.y))
+        self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
 
     def jump(self, dx, dy):
         self.velocity_y += dy / 4
@@ -54,33 +56,30 @@ class HeroCharacter:
             self.IMG = pygame.image.load('manStationary.png')
             self.IMG = pygame.transform.scale(self.IMG, (100, 100))
 
+    def get_rect(self):
+        return self.get_rect()
+
 
 class Obstacle:
-    def __init__(self, side, wide, high, state=False):
-        self.width = wide
-        self.height = high
+    def __init__(self):
+        self.side = random.randint(1, 2)
+        self.width = random.randint(100, 200)
+        self.height = random.randint(50, 100)
         self.y = -self.height
-        self.state = state
-        if side == 1:
-            self.x = width - 100 - self.width
-        else:
-            self.x = 100
+        self.x = width - 100 - self.width if self.side == 1 else 100
+        self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
 
     def show(self):
         pygame.draw.rect(screen, (255, 0, 0), (self.x, self.y, self.width, self.height))
+        self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
 
     def move(self):
         self.y += global_downwards
 
 
+# CRATE OBSTACLES
 obstacle_count = 8
-ob_list = []
-for i in range(obstacle_count):
-    ob_side = random.randint(1, 2)
-    ob_width = random.randrange(10, 50)
-    ob_height = random.randrange(50, 400)
-    ob_list.append(Obstacle(ob_side, ob_width, ob_height))
-ob_list[0].state = True
+ob_list = [Obstacle()]
 
 # INITIATE MAIN CHARACTER AS man
 man = HeroCharacter()
@@ -105,12 +104,15 @@ while running:
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
     # OBSTACLES UPDATE
     for i in ob_list:
-        # CHECK FOR COLLISION
-        if i.state:
-            i.move()
-        if i.y > 100:
-            temp = ob_list.index(i)
-            ob_list[temp-1].state = True
+        # MOVE AND PREPARE NEXT OBJECT IF NEEDED
+        i.move()
+        if i.y > height:
+            ob_list.remove(i)
+        elif 100 + global_downwards >= i.y > 100:
+            ob_list.append(Obstacle())
+        # COLLISION
+        if man.hitbox.colliderect(i.hitbox):
+            running = False
         if i.x + i.width > man.x > i.x:
             if i.y + i.height > man.y > i.y:
                 print('you lost')
