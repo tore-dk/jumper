@@ -77,9 +77,27 @@ class Obstacle:
         self.y += global_downwards
 
 
+class Score:
+    def __init__(self):
+        self.score_val = 0
+        self.high_score = self.score_val
+
+    def add_score(self):
+        self.score_val += global_downwards/5
+        if self.score_val > self.high_score:
+            self.high_score = self.score_val
+
+    def show(self):
+        font_type = pygame.font.Font('freesansbold.ttf', 32)
+        showing = font_type.render('Height: ' + str(self.score_val), True, (255, 255, 255))
+        screen.blit(showing, (50, 50))
+
+
 # CRATE OBSTACLES
-obstacle_count = 8
 ob_list = [Obstacle()]
+
+# CREATE SCORE SYSTEM
+score = Score()
 
 # INITIATE MAIN CHARACTER AS man
 man = HeroCharacter()
@@ -94,9 +112,10 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 running = False
+    # CLICKING MOUSE
     mouse_pos = pygame.mouse.get_pos()
     if pygame.mouse.get_pressed()[0] == 1 and not man.in_motion:
-        if (man.x == 100 and mouse_pos[0] > 100 + man.width) or (mouse_pos[0] < man.x == width - 100 - man.width):
+        if (man.x == 100 and mouse_pos[0] > 100 + man.width/2) or (mouse_pos[0] < man.x == width - 100 - man.width):
             man.jump(mouse_pos[0] - man.x, mouse_pos[1] - man.y)
     # GENERAL SCREEN
     screen.fill((0, 10, 10))
@@ -113,9 +132,6 @@ while running:
         # COLLISION
         if man.hitbox.colliderect(i.hitbox):
             running = False
-        if i.x + i.width > man.x > i.x:
-            if i.y + i.height > man.y > i.y:
-                print('you lost')
         i.show()
 
     # MAIN CHARACTER UPDATE
@@ -138,5 +154,8 @@ while running:
     # SLOWLY FALLING
     man.y += global_downwards
     man.show()
+    # SHOW SCORE
+    score.add_score()
+    score.show()
 
     pygame.display.update()
