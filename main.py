@@ -98,13 +98,15 @@ class Lava:
     def __init__(self):
         self.IMG = pygame.image.load('ball.png')
         self.IMG = pygame.transform.scale(self.IMG, (width, height))
-        self.x = height
-        self.y = 0
-        self.velocity = -5
+        self.x = 0
+        self.y = height
+        self.velocity = -25
 
     def move(self):
-        self.x += self.velocity
-        self.x += global_downwards
+        self.y += self.velocity
+        self.y += global_downwards
+        if self.y > height + 200:
+            self.y = height + 200
 
     def show(self):
         screen.blit(self.IMG, (self.x, self.y))
@@ -168,6 +170,11 @@ while running:
 
     # MAIN CHARACTER UPDATE
     man.update_variables()
+    # WALL DETECTION
+    if man.x < 100:
+        man.hit_wall(1)
+    elif man.x > width - 100 - man.width:
+        man.hit_wall(0)
     if not(height - man.height > man.y > 0):
         running = False
     if man.in_motion:
@@ -187,10 +194,5 @@ while running:
     # "CAMERA" MOVEMENT
     camera_off = man.starting_y - man.y
     global_downwards = camera_off / 5 if camera_off > 0 else 0
-    # WALL DETECTION
-    if man.x < 100:
-        man.hit_wall(1)
-    elif man.x > width - 100 - man.width:
-        man.hit_wall(0)
 
     pygame.display.update()
