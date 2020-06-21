@@ -6,6 +6,7 @@ width, height = 900, 1600
 screen = pygame.display.set_mode((width, height))
 
 global_downwards = 0
+global_gravity = -15
 
 # MAIN CHARACTER
 
@@ -16,7 +17,7 @@ class HeroCharacter:
         self.IMG = pygame.transform.scale(self.IMG, (100, 100))
         self.velocity_y = 0
         self.velocity_x = 0
-        self.acceleration_y = -15
+        self.acceleration_y = global_gravity
         self.in_motion = False
         self.width = self.IMG.get_rect().width
         self.height = self.IMG.get_rect().height
@@ -38,6 +39,7 @@ class HeroCharacter:
         self.in_motion = True
 
     def update_variables(self):
+        self.y += global_downwards
         self.velocity_y -= self.acceleration_y
         self.y += self.velocity_y
         self.x += self.velocity_x
@@ -92,6 +94,25 @@ class Obstacle:
         self.y += global_downwards
 
 
+class Lava:
+    def __init__(self):
+        self.IMG = pygame.image.load('ball.png')
+        self.IMG = pygame.transform.scale(self.IMG, (width, height))
+        self.x = height
+        self.y = 0
+        self.velocity = -5
+
+    def move(self):
+        self.x += self.velocity
+        self.x += global_downwards
+
+    def show(self):
+        screen.blit(self.IMG, (self.x, self.y))
+
+
+# CREATE LAVA
+lava = Lava()
+
 # CRATE OBSTACLES
 ob_list = [Obstacle()]
 
@@ -101,6 +122,24 @@ man = HeroCharacter()
 running = True
 while running:
     time.sleep(.05)
+    # SHOW FROM PREVIOUS ITERATION
+    # GENERAL SCREEN
+    screen.fill((0, 50, 30))
+    pygame.draw.rect(screen, (0, 0, 0), (width - 100, 0, 100, height))
+    pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
+    # SHOW OBSTACLES
+    for i in ob_list:
+        i.show()
+    # LAVA MOVEMENT
+    lava.show()
+    # SHOW MAN
+    man.show()
+    # SHOW SCORE
+    man.show_score()
+    # MOUSE PLACE AND SHOW POINTER
+    mouse_pos = pygame.mouse.get_pos()
+    if not man.in_motion:
+        man.show_pointer(mouse_pos)
 
     # EVENTS
     for event in pygame.event.get():
@@ -110,20 +149,13 @@ while running:
             if event.key == pygame.K_q:
                 running = False
     # CLICKING MOUSE
-    mouse_pos = pygame.mouse.get_pos()
     if pygame.mouse.get_pressed()[0] == 1 and not man.in_motion:
         if (man.x == 100 and mouse_pos[0] > 100 + man.width/2) or (width - 100 - man.width == man.x > mouse_pos[0] - man.width/2):
             man.jump(mouse_pos[0] - (man.x + man.width/2), mouse_pos[1] - (man.y + man.height/2))
 
-    # GENERAL SCREEN
-    screen.fill((0, 50, 30))
-    pygame.draw.rect(screen, (0, 0, 0), (width - 100, 0, 100, height))
-    pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
-
     # OBSTACLES UPDATE
     for i in ob_list:
         # MOVE AND PREPARE NEXT OBJECT IF NEEDED
-        # NEEDS FIXES
         i.move()
         if i.y > height:
             ob_list.remove(i)
@@ -133,32 +165,32 @@ while running:
         # COLLISION
         if man.hitbox.colliderect(i.hitbox):
             running = False
-        i.show()
-    # "CAMERA" MOVEMENT
-    camera_off = man.starting_y - man.y
-    global_downwards = camera_off/5 if camera_off > 0 else 0
 
     # MAIN CHARACTER UPDATE
+    man.update_variables()
     if not(height - man.height > man.y > 0):
         running = False
     if man.in_motion:
-        man.update_variables()
+        man.acceleration_y = global_gravity
         man.IMG = pygame.image.load('manMotion.png')
         man.IMG = pygame.transform.scale(man.IMG, (100, 100))
         if man.velocity_x < 0:
             man.IMG = pygame.transform.flip(man.IMG, True, False)
     else:
-        man.show_pointer(mouse_pos)
+        man.acceleration_y = 0
+        man.velocity_y = 0
+        man.velocity_x = 0
+
+    # LAVA MOVING
+    lava.move()
+
+    # "CAMERA" MOVEMENT
+    camera_off = man.starting_y - man.y
+    global_downwards = camera_off / 5 if camera_off > 0 else 0
     # WALL DETECTION
     if man.x < 100:
         man.hit_wall(1)
     elif man.x > width - 100 - man.width:
         man.hit_wall(0)
-    # SLOWLY FALLING
-    man.y += global_downwards
-    man.show()
-
-    # SHOW SCORE
-    man.show_score()
 
     pygame.display.update()
