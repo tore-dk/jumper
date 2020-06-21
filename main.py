@@ -24,6 +24,8 @@ class HeroCharacter:
         self.y = height - 300 if y is None else y
         self.pointer_angle = 0
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.score = 0
+        self.high_score = self.score
 
     def show(self):
         screen.blit(self.IMG, (self.x, self.y))
@@ -38,6 +40,7 @@ class HeroCharacter:
         self.velocity_y -= self.acceleration_y
         self.y += self.velocity_y
         self.x += self.velocity_x
+        self.score -= int(self.velocity_y/10)
 
     def show_pointer(self, end_pos):
         pygame.draw.line(screen, (255, 255, 255), (self.x + self.width/2, self.y + self.height/2), end_pos)
@@ -59,12 +62,20 @@ class HeroCharacter:
     def get_rect(self):
         return self.get_rect()
 
+    def show_score(self):
+        font_type = pygame.font.Font('freesansbold.ttf', 32)
+        score_show = font_type.render('Height: ' + str(self.score), True, (255, 255, 255))
+        high_score_show = font_type.render('High Score: ' + str(self.high_score), True, (255, 255, 255))
+        hs_width = high_score_show.get_rect().width
+        screen.blit(score_show, (50, 50))
+        screen.blit(high_score_show, (width - 50 - hs_width, 50))
+
 
 class Obstacle:
     def __init__(self):
         self.side = random.randint(1, 2)
         self.width = random.randint(100, 200)
-        self.height = random.randint(50, 100)
+        self.height = random.randint(50, 200)
         self.y = -self.height
         self.x = width - 100 - self.width if self.side == 1 else 100
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
@@ -89,8 +100,11 @@ class Score:
 
     def show(self):
         font_type = pygame.font.Font('freesansbold.ttf', 32)
-        showing = font_type.render('Height: ' + str(self.score_val), True, (255, 255, 255))
-        screen.blit(showing, (50, 50))
+        score_show = font_type.render('Height: ' + str(self.score_val), True, (255, 255, 255))
+        high_score_show = font_type.render('High Score: ' + str(self.high_score), True, (255, 255, 255))
+        hs_width = high_score_show.get_rect().width
+        screen.blit(score_show, (50, 50))
+        screen.blit(high_score_show, (width - 50 - hs_width, 50))
 
 
 # CRATE OBSTACLES
@@ -105,6 +119,7 @@ man = HeroCharacter()
 running = True
 while running:
     time.sleep(.05)
+
     # EVENTS
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -117,10 +132,12 @@ while running:
     if pygame.mouse.get_pressed()[0] == 1 and not man.in_motion:
         if (man.x == 100 and mouse_pos[0] > 100 + man.width/2) or (mouse_pos[0] < man.x == width - 100 - man.width):
             man.jump(mouse_pos[0] - man.x, mouse_pos[1] - man.y)
+
     # GENERAL SCREEN
     screen.fill((0, 10, 10))
     pygame.draw.rect(screen, (0, 0, 0), (width - 100, 0, 100, height))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
+
     # OBSTACLES UPDATE
     for i in ob_list:
         # MOVE AND PREPARE NEXT OBJECT IF NEEDED
@@ -136,8 +153,8 @@ while running:
 
     # MAIN CHARACTER UPDATE
     # RESTART IF TOO LOW
-    if man.y > height:
-        man.__init__()
+    if not(height - man.height > man.y > 0):
+        running = False
     if man.in_motion:
         man.update_variables()
         man.IMG = pygame.image.load('manMotion.png')
@@ -154,8 +171,8 @@ while running:
     # SLOWLY FALLING
     man.y += global_downwards
     man.show()
+
     # SHOW SCORE
-    score.add_score()
-    score.show()
+    man.show_score()
 
     pygame.display.update()
