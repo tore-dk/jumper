@@ -92,30 +92,8 @@ class Obstacle:
         self.y += global_downwards
 
 
-class Score:
-    def __init__(self):
-        self.score_val = 0
-        self.high_score = self.score_val
-
-    def add_score(self):
-        self.score_val += global_downwards/5
-        if self.score_val > self.high_score:
-            self.high_score = self.score_val
-
-    def show(self):
-        font_type = pygame.font.Font('freesansbold.ttf', 32)
-        score_show = font_type.render('Height: ' + str(self.score_val), True, (255, 255, 255))
-        high_score_show = font_type.render('High Score: ' + str(self.high_score), True, (255, 255, 255))
-        hs_width = high_score_show.get_rect().width
-        screen.blit(score_show, (50, 50))
-        screen.blit(high_score_show, (width - 50 - hs_width, 50))
-
-
 # CRATE OBSTACLES
 ob_list = [Obstacle()]
-
-# CREATE SCORE SYSTEM
-score = Score()
 
 # INITIATE MAIN CHARACTER AS man
 man = HeroCharacter()
@@ -138,7 +116,7 @@ while running:
             man.jump(mouse_pos[0] - (man.x + man.width/2), mouse_pos[1] - (man.y + man.height/2))
 
     # GENERAL SCREEN
-    screen.fill((0, 10, 10))
+    screen.fill((0, 50, 30))
     pygame.draw.rect(screen, (0, 0, 0), (width - 100, 0, 100, height))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
 
@@ -158,7 +136,7 @@ while running:
         i.show()
     # "CAMERA" MOVEMENT
     camera_off = man.starting_y - man.y
-    global_downwards = camera_off if camera_off > 0 else 0
+    global_downwards = camera_off/5 if camera_off > 0 else 0
 
     # MAIN CHARACTER UPDATE
     if not(height - man.height > man.y > 0):
