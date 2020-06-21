@@ -5,7 +5,7 @@ pygame.init()
 width, height = 900, 1600
 screen = pygame.display.set_mode((width, height))
 
-global_downwards = 5
+global_downwards = 0
 
 # MAIN CHARACTER
 
@@ -20,8 +20,9 @@ class HeroCharacter:
         self.in_motion = False
         self.width = self.IMG.get_rect().width
         self.height = self.IMG.get_rect().height
+        self.starting_y = height - 600
         self.x = width - 100 - self.width if x is None else x
-        self.y = height - 300 if y is None else y
+        self.y = self.starting_y if y is None else y
         self.pointer_angle = 0
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
         self.score = 0
@@ -32,6 +33,7 @@ class HeroCharacter:
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
 
     def jump(self, dx, dy):
+        print(dx, dy)
         self.velocity_y += dy / 4
         self.velocity_x += dx / 4
         self.in_motion = True
@@ -40,7 +42,7 @@ class HeroCharacter:
         self.velocity_y -= self.acceleration_y
         self.y += self.velocity_y
         self.x += self.velocity_x
-        self.score -= int(self.velocity_y/10)
+        self.score -= int(self.velocity_y/(self.width/2))
 
     def show_pointer(self, end_pos):
         pygame.draw.line(screen, (255, 255, 255), (self.x + self.width/2, self.y + self.height/2), end_pos)
@@ -79,6 +81,7 @@ class Obstacle:
         self.y = -self.height
         self.x = width - 100 - self.width if self.side == 1 else 100
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.deploy_ready = True
 
     def show(self):
         pygame.draw.rect(screen, (255, 0, 0), (self.x, self.y, self.width, self.height))
@@ -130,29 +133,33 @@ while running:
     # CLICKING MOUSE
     mouse_pos = pygame.mouse.get_pos()
     if pygame.mouse.get_pressed()[0] == 1 and not man.in_motion:
-        if (man.x == 100 and mouse_pos[0] > 100 + man.width/2) or (mouse_pos[0] < man.x == width - 100 - man.width):
-            man.jump(mouse_pos[0] - man.x, mouse_pos[1] - man.y)
+        if (man.x == 100 and mouse_pos[0] > 100 + man.width/2) or (width - 100 - man.width == man.x > mouse_pos[0] - man.width/2):
+            man.jump(mouse_pos[0] - (man.x + man.width/2), mouse_pos[1] - (man.y + man.height/2))
 
     # GENERAL SCREEN
     screen.fill((0, 10, 10))
     pygame.draw.rect(screen, (0, 0, 0), (width - 100, 0, 100, height))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
+    # "CAMERA" MOVEMENT
+    camera_off = man.starting_y - man.y
+    global_downwards = camera_off if camera_off > 0 else 0
 
     # OBSTACLES UPDATE
     for i in ob_list:
         # MOVE AND PREPARE NEXT OBJECT IF NEEDED
+        # NEEDS FIXES
         i.move()
         if i.y > height:
             ob_list.remove(i)
-        elif 100 + global_downwards >= i.y > 100:
+        elif i.y > 100 and i.deploy_ready:
             ob_list.append(Obstacle())
+            i.deploy_ready = False
         # COLLISION
         if man.hitbox.colliderect(i.hitbox):
             running = False
         i.show()
 
     # MAIN CHARACTER UPDATE
-    # RESTART IF TOO LOW
     if not(height - man.height > man.y > 0):
         running = False
     if man.in_motion:
@@ -166,8 +173,10 @@ while running:
     # WALL DETECTION
     if man.x < 100:
         man.hit_wall(1)
+        print('wall hit')
     elif man.x > width - 100 - man.width:
         man.hit_wall(0)
+        print('wall hit')
     # SLOWLY FALLING
     man.y += global_downwards
     man.show()
