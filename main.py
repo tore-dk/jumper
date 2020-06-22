@@ -76,7 +76,7 @@ class HeroCharacter:
         screen.blit(high_score_show, (width - 50 - hs_width, 50))
 
 
-ob_img_list = ['furniture-and-household.png', 'balcony1.png']
+ob_img_list = ['balcony.png', 'balcony1.png', 'balcony2.png', 'balcony3.png']
 
 
 class Obstacle:
@@ -106,7 +106,7 @@ class Lava:
         self.IMG = pygame.transform.scale(self.IMG, (width, height))
         self.x = 0
         self.y = height
-        self.velocity = -25
+        self.velocity = -5
 
     def move(self):
         self.y += self.velocity
@@ -150,7 +150,7 @@ man = HeroCharacter()
 
 running = True
 while running:
-    time.sleep(.05)
+    time.sleep(.02)
     # SHOW FROM PREVIOUS ITERATION
     # GENERAL SCREEN
     screen.fill((0, 50, 30))
