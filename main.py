@@ -12,7 +12,7 @@ global_gravity = -15
 
 
 class HeroCharacter:
-    def __init__(self, img='manStationary.png', x=None, y=None):
+    def __init__(self, img='superhero (1).png', x=None, y=None):
         self.IMG = pygame.image.load(img)
         self.IMG = pygame.transform.scale(self.IMG, (100, 100))
         self.velocity_y = 0
@@ -56,12 +56,12 @@ class HeroCharacter:
         self.in_motion = False
         if side == 1:
             self.x = 100
-            temp_img = pygame.image.load('manStationary.png')
+            temp_img = pygame.image.load('superhero (1).png')
             temp_img = pygame.transform.scale(temp_img, (100, 100))
             self.IMG = pygame.transform.flip(temp_img, True, False)
         else:
             self.x = width - 100 - self.width
-            self.IMG = pygame.image.load('manStationary.png')
+            self.IMG = pygame.image.load('superhero (1).png')
             self.IMG = pygame.transform.scale(self.IMG, (100, 100))
 
     def get_rect(self):
@@ -76,8 +76,13 @@ class HeroCharacter:
         screen.blit(high_score_show, (width - 50 - hs_width, 50))
 
 
+ob_img_list = ['furniture-and-household.png', 'balcony1.png']
+
+
 class Obstacle:
     def __init__(self):
+        self.img_place = random.randint(0, len(ob_img_list))
+        self.IMG = pygame.image.load(ob_img_list[self.img_place - 1])
         self.side = random.randint(1, 2)
         self.width = random.randint(100, 200)
         self.height = random.randint(200, 500)
@@ -87,7 +92,8 @@ class Obstacle:
         self.deploy_ready = True
 
     def show(self):
-        pygame.draw.rect(screen, (255, 0, 0), (self.x, self.y, self.width, self.height))
+        self.IMG = pygame.transform.scale(self.IMG, (self.width, self.height))
+        screen.blit(self.IMG, (self.x, self.y))
         self.hitbox = pygame.Rect(self.x, self.y, self.width, self.height)
 
     def move(self):
@@ -112,6 +118,27 @@ class Lava:
         screen.blit(self.IMG, (self.x, self.y))
 
 
+class Wall:
+    def __init__(self, side_left, y):
+        self.IMG = pygame.image.load('wall.png')
+        self.side_left = side_left
+        if side_left:
+            self.x = 100 - 512
+        else:
+            self.x = width - 100
+        self.y = y
+        self.deploy_ready = True
+
+    def move(self):
+        self.y += global_downwards
+
+    def show(self):
+        screen.blit(self.IMG, (self.x, self.y))
+
+
+# CREATE WALLS
+wall_list = [Wall(True, height - 512), Wall(False, height - 512)]
+
 # CREATE LAVA
 lava = Lava()
 
@@ -129,6 +156,8 @@ while running:
     screen.fill((0, 50, 30))
     pygame.draw.rect(screen, (0, 0, 0), (width - 100, 0, 100, height))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 100, height))
+    for i in wall_list:
+        i.show()
     # SHOW OBSTACLES
     for i in ob_list:
         i.show()
@@ -155,6 +184,13 @@ while running:
         if (man.x == 100 and mouse_pos[0] > 100 + man.width/2) or (width - 100 - man.width == man.x > mouse_pos[0] - man.width/2):
             man.jump(mouse_pos[0] - (man.x + man.width/2), mouse_pos[1] - (man.y + man.height/2))
 
+    # WALL UPDATE
+    for i in wall_list:
+        if i.y > 0 and i.deploy_ready:
+            wall_list.append(Wall(i.side_left, i.y - 512))
+            i.deploy_ready = False
+        i.move()
+
     # OBSTACLES UPDATE
     for i in ob_list:
         # MOVE AND PREPARE NEXT OBJECT IF NEEDED
@@ -179,7 +215,7 @@ while running:
         running = False
     if man.in_motion:
         man.acceleration_y = global_gravity
-        man.IMG = pygame.image.load('manMotion.png')
+        man.IMG = pygame.image.load('superhero.png')
         man.IMG = pygame.transform.scale(man.IMG, (100, 100))
         if man.velocity_x < 0:
             man.IMG = pygame.transform.flip(man.IMG, True, False)
